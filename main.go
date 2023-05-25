@@ -91,6 +91,7 @@ func main() {
 
 	_ = cmd.Wait()
 	elapsed := time.Since(start)
+	elapsed = elapsed.Round(time.Millisecond)
 
 	title := fmt.Sprintf("%q has finished", opts.Command.Name)
 	message := opts.CustomMessage
