@@ -18,6 +18,7 @@ const (
 )
 
 var opts struct {
+	Verbose       bool   `short:"v" long:"verbose" description:"Print extra debugging information"`
 	CustomMessage string `short:"m" long:"message" description:"Set a custom message to send"`
 	Topic         string `short:"t" long:"topic" env:"NOTIFY_TOPIC" description:"Topic name to use on ntfy.sh"`
 	Command       struct {
@@ -33,9 +34,11 @@ func toStderr(a ...any) {
 func sendNotification(title, message string) error {
 	topicURL := url.URL{Scheme: "https", Host: notifyHost, Path: opts.Topic}
 
-	fmt.Printf("Sending notification to %s\n", topicURL.String())
-	fmt.Printf("  Title: %s\n", title)
-	fmt.Printf("  Message: %s\n", message)
+	if opts.Verbose {
+		fmt.Printf("Sending notification to %s\n", topicURL.String())
+		fmt.Printf("  Title: %s\n", title)
+		fmt.Printf("  Message: %s\n", message)
+	}
 
 	req, err := http.NewRequest(http.MethodPost, topicURL.String(), strings.NewReader(message))
 	if err != nil {
@@ -69,8 +72,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Topic:", opts.Topic)
-	fmt.Printf("Command: %+v\n", opts.Command)
+	if opts.Verbose {
+		fmt.Println("Topic:", opts.Topic)
+		fmt.Printf("Command: %+v\n", opts.Command)
+	}
 
 	cmd := exec.Command(opts.Command.Name, opts.Command.Arguments...)
 	cmd.Stdin = os.Stdin
