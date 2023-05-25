@@ -70,7 +70,7 @@ func main() {
 	}
 
 	fmt.Println("Topic:", opts.Topic)
-	fmt.Printf("Command: %+v\n", opts)
+	fmt.Printf("Command: %+v\n", opts.Command)
 
 	cmd := exec.Command(opts.Command.Name, opts.Command.Arguments...)
 	cmd.Stdin = os.Stdin
