@@ -2,6 +2,6 @@ module github.com/cdevoogd/notify
 
 go 1.20
 
-require github.com/jessevdk/go-flags v1.5.0
+require github.com/alexflint/go-arg v1.4.3
 
-require golang.org/x/sys v0.1.0 // indirect
+require github.com/alexflint/go-scalar v1.1.0 // indirect

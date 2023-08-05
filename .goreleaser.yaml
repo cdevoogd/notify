@@ -1,0 +1,65 @@
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+
+checksum:
+  name_template: 'checksums.txt'
+
+archives:
+  - format: tar.gz
+    # This name template makes the OS and Arch compatible with the results of uname.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # Use zip for windows archives
+    format_overrides:
+    - goos: windows
+      format: zip
+
+release:
+  github:
+    owner: cdevoogd
+    name: notify
+  draft: true
+  replace_existing_draft: true
+  prerelease: auto
+
+brews:
+  - name: notify
+    description: A tool to send notifications to your phone when a command is complete.
+    homepage: https://github.com/cdevoogd/notify
+    license: MIT
+    install: |
+      bin.install "{{ .Binary }}"
+    folder: Formula
+    repository:
+      owner: cdevoogd
+      name: homebrew-tap
+      branch: goreleaser/{{ .ProjectName }}-{{ .Version }}
+      pull_request:
+        enabled: true
+        draft: true
+        base:
+          branch: master
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
