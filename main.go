@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jessevdk/go-flags"
+	"github.com/alexflint/go-arg"
 )
 
 const (
@@ -17,14 +17,11 @@ const (
 	titleHeader = "Title"
 )
 
-var opts struct {
-	Verbose       bool   `short:"v" long:"verbose" description:"Print extra debugging information"`
-	CustomMessage string `short:"m" long:"message" description:"Set a custom message to send"`
-	Topic         string `short:"t" long:"topic" env:"NOTIFY_TOPIC" description:"Topic name to use on ntfy.sh"`
-	Command       struct {
-		Name      string   `positional-arg-name:"COMMAND" description:"The command for notify to execute"`
-		Arguments []string `positional-arg-name:"ARGUMENTS" description:"Arguments to pass to the command. You can use -- before specifying the command to prevent notify from parsing these arguments."`
-	} `positional-args:"true" required:"true"`
+var args struct {
+	CustomMessage string   `arg:"-m,--message" help:"Override the message sent in the notification"`
+	Topic         string   `arg:"-t,--topic,env:NOTIFY_TOPIC" help:"Topic name on ntfy.sh"`
+	Command       string   `arg:"positional,required" help:"The command to execute"`
+	Args          []string `arg:"positional" help:"Arguments to pass to the command. Use -- to prevent notify from parsing these arguments."`
 }
 
 func toStderr(a ...any) {
@@ -32,13 +29,7 @@ func toStderr(a ...any) {
 }
 
 func sendNotification(title, message string) error {
-	topicURL := url.URL{Scheme: "https", Host: notifyHost, Path: opts.Topic}
-
-	if opts.Verbose {
-		fmt.Printf("Sending notification to %s\n", topicURL.String())
-		fmt.Printf("  Title: %s\n", title)
-		fmt.Printf("  Message: %s\n", message)
-	}
+	topicURL := url.URL{Scheme: "https", Host: notifyHost, Path: args.Topic}
 
 	req, err := http.NewRequest(http.MethodPost, topicURL.String(), strings.NewReader(message))
 	if err != nil {
@@ -56,45 +47,31 @@ func sendNotification(title, message string) error {
 }
 
 func main() {
-	_, err := flags.Parse(&opts)
-	if err != nil {
-		if flags.WroteHelp(err) {
-			os.Exit(0)
-		}
+	arg.MustParse(&args)
 
-		// The flags package will automatically print out errors
-		os.Exit(1)
-	}
-
-	if opts.Topic == "" {
+	if args.Topic == "" {
 		toStderr("A topic from ntfy.sh is required but was not set")
 		toStderr("Set a topic by setting the NOTIFY_TOPIC environment variable or by using the -t/--topic flags")
 		os.Exit(1)
 	}
 
-	if opts.Verbose {
-		fmt.Println("Topic:", opts.Topic)
-		fmt.Printf("Command: %+v\n", opts.Command)
-	}
-
-	cmd := exec.Command(opts.Command.Name, opts.Command.Arguments...)
+	cmd := exec.Command(args.Command, args.Args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	start := time.Now()
-	err = cmd.Start()
+	err := cmd.Run()
 	if err != nil {
 		toStderr("Error starting command:", err)
 		os.Exit(1)
 	}
 
-	_ = cmd.Wait()
 	elapsed := time.Since(start)
 	elapsed = elapsed.Round(time.Millisecond)
 
-	title := fmt.Sprintf("%q has finished", opts.Command.Name)
-	message := opts.CustomMessage
+	title := fmt.Sprintf("%q has finished", args.Command)
+	message := args.CustomMessage
 	if message == "" {
 		message = fmt.Sprintf("Exit Code: %d, Elapsed: %s", cmd.ProcessState.ExitCode(), elapsed)
 	}
