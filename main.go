@@ -11,14 +11,27 @@ import (
 	"github.com/cdevoogd/notify/internal/ntfy"
 )
 
-var args struct {
+// These variables will be set during release builds by GoReleaser
+// https://goreleaser.com/cookbooks/using-main.version/
+var (
+	version = "dev"
+	commit  = "unknown"
+	date    = "unknown"
+)
+
+type args struct {
 	ntfy.Config
 	CustomMessage string   `arg:"-m,--message" help:"Override the message sent in the notification"`
 	Command       string   `arg:"positional,required" help:"The command to execute"`
 	Args          []string `arg:"positional" help:"Arguments to pass to the command. Use -- to prevent notify from parsing these arguments."`
 }
 
+func (args) Version() string {
+	return fmt.Sprintf("notify %s\ncommit: %s\nbuild date: %s", version, commit, date)
+}
+
 func main() {
+	var args args
 	arg.MustParse(&args)
 
 	notifier, err := ntfy.NewNotifier(&args.Config)
