@@ -50,7 +50,6 @@ brews:
       branch: goreleaser/{{ .ProjectName }}-{{ .Version }}
       pull_request:
         enabled: true
-        draft: true
         base:
           branch: master
 
