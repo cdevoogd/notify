@@ -26,11 +26,5 @@ jobs:
         uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 #v7.2.3
         with:
           distribution: goreleaser
-          version: latest
+          version: ~> v2
           args: release --clean
-        env:
-          # The automatically-created token wont work for updating the tap since the tap lives in
-          # another repository and the auto-generated token only gives access to this repository. A
-          # separate token is needed that was content write permissions to this repo and the tap
-          # repository.
-          GITHUB_TOKEN: ${{ secrets.GORELEASER_TOKEN }}
